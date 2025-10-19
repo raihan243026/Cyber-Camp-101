@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Camp 101: Interactive Curriculum</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Chosen Palette: Calm Harmony (Stone, Slate, Teal) -->
+    <!-- Application Structure Plan: The application uses an interactive dashboard layout. The core structure is a master-detail layout featuring a vertical timeline as the primary navigation (master). The header now incorporates a subtle, dynamic 3D visual (a rotating wireframe network node using Three.js) to immediately convey a high-tech/cyber theme. This timeline visually represents the 12-week progression, and clicking a module scrolls to its detailed content (detail). This approach ensures clear progression and easy exploration. The main content is highly responsive, adapting the timeline to a fluid column structure on smaller devices. -->
+    <!-- Visualization & Content Choices: 1. Weekly Commitment -> Goal: Inform/Proportions -> Viz: Donut Chart -> Interaction: Hover tooltips -> Justification: Breaks down time commitment visually. -> Library: Chart.js. 2. Course Structure (12 Weeks) -> Goal: Organize/Navigate -> Viz: Vertical Timeline -> Interaction: Click to scroll, active state highlighting -> Justification: Creates an intuitive roadmap. -> Library: HTML/CSS/JS. 3. Module Details (Topics, Labs, Industry, CTF, Resources) -> Goal: Organize/Inform/Reference -> Viz: Tabbed Panes (now including a Resources tab with mock PDF/Video links) -> Interaction: Click tabs to switch content view -> Justification: Chunks complex information and provides immediate access to supplementary media, enhancing the learning experience. -> Library: HTML/CSS/JS. 4. Cyber Theme Visual -> Goal: Engagement/Aesthetics -> Viz: Rotating Wireframe Node -> Interaction: Subtle 3D Animation -> Justification: Provides a high-impact, modern, and thematic background element. -> Library: Three.js (Canvas). -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 50%;
+            background-color: white;
+            border: 4px solid #0d9488;
+            left: -0.625rem;
+            top: 0;
+            z-index: 10;
+        }
+        .timeline-item.active::before {
+            background-color: #0d9488;
+        }
+        .tab-btn.active {
+            border-color: #0d9488;
+            color: #0d9488;
+            background-color: #f0fdfa;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-slate-800">
+
+    <div class="relative overflow-hidden bg-slate-100/50">
+        <canvas id="threeCanvas" class="absolute inset-0 w-full h-full opacity-10"></canvas>
+        <div class="relative container mx-auto px-4 py-8 md:py-16 z-10">
+            <header class="text-center mb-12">
+                <h1 class="text-4xl md:text-6xl font-extrabold text-teal-800 drop-shadow-md">Cyber Camp 101</h1>
+                <p class="mt-4 text-lg md:text-xl text-slate-600 max-w-4xl mx-auto">An interactive guide to the 12-week foundational cybersecurity training program. Explore the curriculum week by week and access essential resources.</p>
+            </header>
+        </div>
+    </div>
+    
+    <div class="container mx-auto px-4 py-8 md:py-12">
+        <section id="overview" class="mb-16">
+             <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-slate-800">Program at a Glance</h2>
+                <p class="mt-2 text-slate-500">This section provides a high-level overview of the camp's structure, objectives, and time commitment. Use the chart and key metrics below to understand what to expect from this intensive 12-week journey into cybersecurity.</p>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+                <div class="bg-white p-4 md:p-6 rounded-xl shadow-lg flex flex-col items-center text-center card-hover transition duration-300">
+                    <span class="text-3xl md:text-4xl mb-2 text-teal-600">🗓️</span>
+                    <h3 class="font-bold text-base md:text-lg text-teal-700">Duration</h3>
+                    <p class="text-xl md:text-2xl font-semibold text-slate-700">12 Weeks</p>
+                    <p class="text-slate-500 text-sm">(3 Months)</p>
+                </div>
+                <div class="bg-white p-4 md:p-6 rounded-xl shadow-lg flex flex-col items-center text-center card-hover transition duration-300">
+                     <span class="text-3xl md:text-4xl mb-2 text-teal-600">🎯</span>
+                    <h3 class="font-bold text-base md:text-lg text-teal-700">Target Audience</h3>
+                    <p class="text-xl md:text-2xl font-semibold text-slate-700">Beginners</p>
+                    <p class="text-slate-500 text-sm">(No prior experience)</p>
+                </div>
+                <div class="bg-white p-4 md:p-6 rounded-xl shadow-lg flex flex-col items-center text-center card-hover transition duration-300">
+                     <span class="text-3xl md:text-4xl mb-2 text-teal-600">📦</span>
+                    <h3 class="font-bold text-base md:text-lg text-teal-700">Delivery Method</h3>
+                    <p class="text-xl md:text-2xl font-semibold text-slate-700">Hybrid</p>
+                    <p class="text-slate-500 text-sm">(Workshops, Labs, CTFs)</p>
+                </div>
+                <div class="bg-white p-4 md:p-6 rounded-xl shadow-lg flex flex-col items-center text-center card-hover transition duration-300">
+                    <div class="chart-container w-full h-32 md:h-48 max-h-48 mb-2">
+                        <canvas id="commitmentChart"></canvas>
+                    </div>
+                     <h3 class="font-bold text-base md:text-lg text-teal-700 mt-2">Weekly Commitment</h3>
+                     <p class="text-slate-500 text-sm">10-15 Hours (Avg.)</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="flex flex-col md:flex-row gap-8 lg:gap-12">
+            <aside class="md:w-1/4 lg:w-1/5 md:sticky md:top-8 self-start bg-white p-6 rounded-xl shadow-xl">
+                 <h3 class="text-2xl font-bold mb-4 text-slate-800">Course Roadmap</h3>
+                 <p class="text-slate-500 mb-6 text-sm">Click on a module below to jump to its detailed curriculum. The timeline shows your progression through the key areas of cybersecurity, from fundamentals to advanced topics.</p>
+                <div class="relative pl-5 border-l-2 border-slate-200">
+                    <nav id="timeline-nav" class="flex flex-col gap-6">
+                        <a href="#weeks1-2" class="timeline-item relative text-slate-600 hover:text-teal-600 font-semibold transition-colors duration-300 py-1">Weeks 1-2 <br><span class="font-normal text-sm">Intro & Linux</span></a>
+                        <a href="#weeks3-4" class="timeline-item relative text-slate-600 hover:text-teal-600 font-semibold transition-colors duration-300 py-1">Weeks 3-4 <br><span class="font-normal text-sm">Networking</span></a>
+                        <a href="#weeks5-6" class="timeline-item relative text-slate-600 hover:text-teal-600 font-semibold transition-colors duration-300 py-1">Weeks 5-6 <br><span class="font-normal text-sm">Web Security</span></a>
+                        <a href="#weeks7-8" class="timeline-item relative text-slate-600 hover:text-teal-600 font-semibold transition-colors duration-300 py-1">Weeks 7-8 <br><span class="font-normal text-sm">Cryptography</span></a>
+                        <a href="#weeks9-10" class="timeline-item relative text-slate-600 hover:text-teal-600 font-semibold transition-colors duration-300 py-1">Weeks 9-10 <br><span class="font-normal text-sm">System Exploits</span></a>
+                        <a href="#weeks11-12" class="timeline-item relative text-slate-600 hover:text-teal-600 font-semibold transition-colors duration-300 py-1">Weeks 11-12 <br><span class="font-normal text-sm">CTFs & Capstone</span></a>
+                    </nav>
+                </div>
+            </aside>
+
+            <main class="flex-1">
+                <div id="curriculum-content" class="space-y-12 md:space-y-16">
+                    <div id="weeks1-2" class="curriculum-module bg-white p-6 md:p-8 rounded-2xl shadow-xl transition-all duration-300">
+                        <h2 class="text-2xl md:text-3xl font-bold text-teal-700 mb-1">Weeks 1–2: Introduction to Cybersecurity and Linux Fundamentals</h2>
+                        <p class="mb-6 text-slate-600">This foundational module introduces the core concepts of cybersecurity and equips you with essential Linux command-line skills, preparing your environment for the hands-on labs ahead. You will build your virtual lab and learn the language of hackers: the command line.</p>
+                        <div class="module-tabs">
+                            <div class="border-b border-slate-200 mb-4 flex flex-wrap gap-2 md:gap-4">
+                                <button data-tab="1-topics" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Topics</button>
+                                <button data-tab="1-industry" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Industry Flavor</button>
+                                <button data-tab="1-labs" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Labs</button>
+                                <button data-tab="1-ctf" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">CTF Prep</button>
+                                <button data-tab="1-resources" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Resources</button>
+                            </div>
+                            <div class="tab-content text-slate-700">
+                                <div id="1-topics">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Cybersecurity overview: CIA triad, threat landscape, and career paths.</li>
+                                        <li>Types of cyberattacks: Malware, phishing, social engineering, and DDoS.</li>
+                                        <li>Linux basics: File system, commands (<code class="bg-slate-100 p-1 rounded">ls, cd, cat, grep, chmod, find, sudo</code>), and bash scripting.</li>
+                                        <li>Setting up a virtual lab: Kali Linux, Parrot OS, VirtualBox/VMware.</li>
+                                        <li>Introduction to virtualization and sandboxing.</li>
+                                    </ul>
+                                </div>
+                                <div id="1-industry" class="hidden">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Case studies of real-world breaches (e.g., Target 2013, WannaCry).</li>
+                                        <li>Role of Linux in penetration testing and SOC operations.</li>
+                                    </ul>
+                                </div>
+                                <div id="1-labs" class="hidden">
+                                     <ul class="list-disc list-inside space-y-2">
+                                        <li>Install and configure Kali Linux in a VM.</li>
+                                        <li>Write bash scripts for file manipulation and automation.</li>
+                                        <li>Set up a secure lab environment for testing.</li>
+                                    </ul>
+                                </div>
+                                <div id="1-ctf" class="hidden">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Solve OverTheWire Bandit challenges (Levels 0–10).</li>
+                                        <li>Participate in a beginner-friendly CTF.</li>
+                                    </ul>
+                                </div>
+                                <div id="1-resources" class="hidden">
+                                    <h4 class="font-bold mb-3 text-teal-700">Supplementary Media:</h4>
+                                    <ul class="space-y-3">
+                                        <li><a href="https://www.youtube.com/watch?v=mock_linux_basics" target="_blank" class="text-blue-600 hover:text-blue-800 underline flex items-center"><span class="mr-2">▶️</span> YouTube: Linux Command Line Basics (1hr Video)</a></li>
+                                        <li><a href="https://docs.google.com/document/d/mock_cia_triad.pdf" target="_blank" class="text-blue-600 hover:text-blue-800 underline flex items-center"><span class="mr-2">📄</span> PDF: The CIA Triad Explained (Beginner's Guide)</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="weeks3-4" class="curriculum-module bg-white p-6 md:p-8 rounded-2xl shadow-xl transition-all duration-300">
+                        <h2 class="text-2xl md:text-3xl font-bold text-teal-700 mb-1">Weeks 3–4: Networking Fundamentals</h2>
+                         <p class="mb-6 text-slate-600">Dive into how devices communicate. This module covers essential networking models, protocols, and the tools used to analyze and scan networks, forming the backbone of cybersecurity. Understanding the network is essential for finding vulnerabilities.</p>
+                        <div class="module-tabs">
+                            <div class="border-b border-slate-200 mb-4 flex flex-wrap gap-2 md:gap-4">
+                                <button data-tab="2-topics" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Topics</button>
+                                <button data-tab="2-industry" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Industry Flavor</button>
+                                <button data-tab="2-labs" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Labs</button>
+                                <button data-tab="2-ctf" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">CTF Prep</button>
+                                <button data-tab="2-resources" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Resources</button>
+                            </div>
+                            <div class="tab-content text-slate-700">
+                                <div id="2-topics">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Networking basics: OSI and TCP/IP models, IP addressing, subnets, and ports.</li>
+                                        <li>Protocols: HTTP, HTTPS, FTP, SSH, DNS, and SNMP.</li>
+                                        <li>Packet analysis with Wireshark and tcpdump.</li>
+                                        <li>Network scanning and enumeration with Nmap and Netcat.</li>
+                                        <li>Introduction to firewalls and network security basics.</li>
+                                    </ul>
+                                </div>
+                                <div id="2-industry" class="hidden">
+                                     <ul class="list-disc list-inside space-y-2">
+                                        <li>Networking in enterprise security and SOC monitoring.</li>
+                                        <li>Real-world network attacks (e.g., MitM, DNS spoofing).</li>
+                                    </ul>
+                                </div>
+                                <div id="2-labs" class="hidden">
+                                     <ul class="list-disc list-inside space-y-2">
+                                        <li>Perform Nmap scans to identify open ports and services.</li>
+                                        <li>Analyze HTTP and DNS traffic using Wireshark.</li>
+                                        <li>Configure a basic firewall using iptables.</li>
+                                    </ul>
+                                </div>
+                                <div id="2-ctf" class="hidden">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Solve TryHackMe’s “Network Fundamentals” and “Nmap” rooms.</li>
+                                        <li>Participate in a networking-focused mini-CTF.</li>
+                                    </ul>
+                                </div>
+                                <div id="2-resources" class="hidden">
+                                    <h4 class="font-bold mb-3 text-teal-700">Supplementary Media:</h4>
+                                    <ul class="space-y-3">
+                                        <li><a href="https://www.youtube.com/watch?v=mock_osi_model" target="_blank" class="text-blue-600 hover:text-blue-800 underline flex items-center"><span class="mr-2">▶️</span> YouTube: The OSI Model Explained in 7 Simple Layers</a></li>
+                                        <li><a href="https://docs.google.com/document/d/mock_nmap_reference.pdf" target="_blank" class="text-blue-600 hover:text-blue-800 underline flex items-center"><span class="mr-2">📄</span> PDF: Essential Nmap Command Reference Sheet</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="weeks5-6" class="curriculum-module bg-white p-6 md:p-8 rounded-2xl shadow-xl transition-all duration-300">
+                        <h2 class="text-2xl md:text-3xl font-bold text-teal-700 mb-1">Weeks 5–6: Web Security Basics</h2>
+                         <p class="mb-6 text-slate-600">Explore the most common attack surface: web applications. Learn about web architecture, vulnerabilities like the OWASP Top 10, and how to use tools like Burp Suite to find and test them.</p>
+                        <div class="module-tabs">
+                             <div class="border-b border-slate-200 mb-4 flex flex-wrap gap-2 md:gap-4">
+                                <button data-tab="3-topics" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Topics</button>
+                                <button data-tab="3-industry" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Industry Flavor</button>
+                                <button data-tab="3-labs" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Labs</button>
+                                <button data-tab="3-ctf" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">CTF Prep</button>
+                                <button data-tab="3-resources" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Resources</button>
+                            </div>
+                            <div class="tab-content text-slate-700">
+                                <div id="3-topics">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Web architecture: Client-server model, HTTP methods, cookies, and sessions.</li>
+                                        <li>Common web vulnerabilities: XSS, SQL injection, CSRF, and file inclusion.</li>
+                                        <li>Introduction to Burp Suite: Proxy, Intruder, and Repeater.</li>
+                                        <li>Secure coding practices: Input validation and sanitization.</li>
+                                        <li>Introduction to OWASP Top 10.</li>
+                                    </ul>
+                                </div>
+                                <div id="3-industry" class="hidden">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Web security in DevSecOps and application development.</li>
+                                        <li>Case studies of web-based attacks (e.g., Equifax SQL injection).</li>
+                                    </ul>
+                                </div>
+                                <div id="3-labs" class="hidden">
+                                     <ul class="list-disc list-inside space-y-2">
+                                        <li>Set up Burp Suite and intercept HTTP requests.</li>
+                                        <li>Exploit XSS and SQL injection.</li>
+                                        <li>Practice secure coding with a simple web app.</li>
+                                    </ul>
+                                </div>
+                                <div id="3-ctf" class="hidden">
+                                     <ul class="list-disc list-inside space-y-2">
+                                        <li>Solve web challenges on TryHackMe or PortSwigger Web Security Academy.</li>
+                                        <li>Compete in a web-focused CTF event.</li>
+                                    </ul>
+                                </div>
+                                <div id="3-resources" class="hidden">
+                                    <h4 class="font-bold mb-3 text-teal-700">Supplementary Media:</h4>
+                                    <ul class="space-y-3">
+                                        <li><a href="https://www.youtube.com/watch?v=mock_sql_injection" target="_blank" class="text-blue-600 hover:text-blue-800 underline flex items-center"><span class="mr-2">▶️</span> YouTube: Understanding and Preventing SQL Injection</a></li>
+                                        <li><a href="https://docs.google.com/document/d/mock_owasp_top_10.pdf" target="_blank" class="text-blue-600 hover:text-blue-800 underline flex items-center"><span class="mr-2">📄</span> PDF: The OWASP Top 10 (2021) Summary</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="weeks7-8" class="curriculum-module bg-white p-6 md:p-8 rounded-2xl shadow-xl transition-all duration-300">
+                        <h2 class="text-2xl md:text-3xl font-bold text-teal-700 mb-1">Weeks 7–8: Cryptography and Steganography</h2>
+                        <p class="mb-6 text-slate-600">Uncover the art of secrets. This module covers the basics of modern encryption, hashing, and digital signatures, as well as the techniques used to hide data in plain sight. You'll learn how information is secured and how to break those security measures when weak.</p>
+                        <div class="module-tabs">
+                             <div class="border-b border-slate-200 mb-4 flex flex-wrap gap-2 md:gap-4">
+                                <button data-tab="4-topics" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Topics</button>
+                                <button data-tab="4-industry" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Industry Flavor</button>
+                                <button data-tab="4-labs" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Labs</button>
+                                <button data-tab="4-ctf" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">CTF Prep</button>
+                                <button data-tab="4-resources" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Resources</button>
+                            </div>
+                            <div class="tab-content text-slate-700">
+                                <div id="4-topics">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Cryptography basics: Symmetric vs. asymmetric encryption, hashing, and digital signatures.</li>
+                                        <li>Algorithms: AES, RSA, SHA, MD5, and HMAC.</li>
+                                        <li>Steganography: Hiding data in images, audio, and text.</li>
+                                        <li>Tools: OpenSSL, GPG, Steghide, and Hashcat.</li>
+                                        <li>Password security and cracking techniques.</li>
+                                    </ul>
+                                </div>
+                                <div id="4-industry" class="hidden">
+                                     <ul class="list-disc list-inside space-y-2">
+                                        <li>Encryption in data protection (e.g., GDPR, HIPAA compliance).</li>
+                                        <li>Case studies of cryptography failures (e.g., Heartbleed).</li>
+                                    </ul>
+                                </div>
+                                <div id="4-labs" class="hidden">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Encrypt/decrypt files using OpenSSL and GPG.</li>
+                                        <li>Extract hidden data from images with Steghide.</li>
+                                        <li>Crack weak passwords using Hashcat.</li>
+                                    </ul>
+                                </div>
+                                <div id="4-ctf" class="hidden">
+                                     <ul class="list-disc list-inside space-y-2">
+                                        <li>Solve crypto and stegno challenges on CryptoHack and OverTheWire.</li>
+                                        <li>Participate in a crypto-focused mini-CTF.</li>
+                                    </ul>
+                                </div>
+                                <div id="4-resources" class="hidden">
+                                    <h4 class="font-bold mb-3 text-teal-700">Supplementary Media:</h4>
+                                    <ul class="space-y-3">
+                                        <li><a href="https://www.youtube.com/watch?v=mock_rsa_explained" target="_blank" class="text-blue-600 hover:text-blue-800 underline flex items-center"><span class="mr-2">▶️</span> YouTube: How RSA Encryption Works (Visual Guide)</a></li>
+                                        <li><a href="https://docs.google.com/document/d/mock_hashing_guide.pdf" target="_blank" class="text-blue-600 hover:text-blue-800 underline flex items-center"><span class="mr-2">📄</span> PDF: Hashing Algorithms and Their Role in Security</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="weeks9-10" class="curriculum-module bg-white p-6 md:p-8 rounded-2xl shadow-xl transition-all duration-300">
+                        <h2 class="text-2xl md:text-3xl font-bold text-teal-700 mb-1">Weeks 9–10: System Security and Exploitation</h2>
+                         <p class="mb-6 text-slate-600">Learn to think like an attacker. This module focuses on securing operating systems, finding and exploiting vulnerabilities, and escalating privileges using powerful tools like Metasploit. This is where your foundational skills are applied to real systems.</p>
+                        <div class="module-tabs">
+                             <div class="border-b border-slate-200 mb-4 flex flex-wrap gap-2 md:gap-4">
+                                <button data-tab="5-topics" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Topics</button>
+                                <button data-tab="5-industry" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Industry Flavor</button>
+                                <button data-tab="5-labs" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Labs</button>
+                                <button data-tab="5-ctf" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">CTF Prep</button>
+                                <button data-tab="5-resources" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Resources</button>
+                            </div>
+                            <div class="tab-content text-slate-700">
+                                <div id="5-topics">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Operating system security: Windows and Linux architecture.</li>
+                                        <li>Privilege escalation: Linux (SUID, sudo misconfigurations) and Windows (token impersonation).</li>
+                                        <li>Introduction to Metasploit: Modules, payloads, and exploits.</li>
+                                        <li>Common vulnerabilities: Buffer overflows, misconfigurations, and weak permissions.</li>
+                                        <li>Password cracking with John the Ripper and Hashcat.</li>
+                                    </ul>
+                                </div>
+                                <div id="5-industry" class="hidden">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>System security in enterprise environments (e.g., Active Directory).</li>
+                                        <li>Case studies of privilege escalation attacks (e.g., NotPetya).</li>
+                                    </ul>
+                                </div>
+                                <div id="5-labs" class="hidden">
+                                     <ul class="list-disc list-inside space-y-2">
+                                        <li>Perform Linux and Windows privilege escalation in a lab environment.</li>
+                                        <li>Use Metasploit to exploit a vulnerable service.</li>
+                                        <li>Crack password hashes in a controlled environment.</li>
+                                    </ul>
+                                </div>
+                                <div id="5-ctf" class="hidden">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Solve privilege escalation challenges on TryHackMe or HackTheBox.</li>
+                                        <li>Compete in a system-focused CTF event.</li>
+                                    </ul>
+                                </div>
+                                <div id="5-resources" class="hidden">
+                                    <h4 class="font-bold mb-3 text-teal-700">Supplementary Media:</h4>
+                                    <ul class="space-y-3">
+                                        <li><a href="https://www.youtube.com/watch?v=mock_metasploit_intro" target="_blank" class="text-blue-600 hover:text-blue-800 underline flex items-center"><span class="mr-2">▶️</span> YouTube: Metasploit Framework Introduction and Basics</a></li>
+                                        <li><a href="https://docs.google.com/document/d/mock_priv_esc_checklist.pdf" target="_blank" class="text-blue-600 hover:text-blue-800 underline flex items-center"><span class="mr-2">📄</span> PDF: Windows Privilege Escalation Checklist</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="weeks11-12" class="curriculum-module bg-white p-6 md:p-8 rounded-2xl shadow-xl transition-all duration-300">
+                        <h2 class="text-2xl md:text-3xl font-bold text-teal-700 mb-1">Weeks 11–12: Introduction to CTFs and Capstone Project</h2>
+                        <p class="mb-6 text-slate-600">Put your skills to the test. The final module prepares you for Capture The Flag competitions and culminates in a capstone project where you'll solve challenges and produce a professional write-up. This module synthesizes everything you've learned.</p>
+                        <div class="module-tabs">
+                             <div class="border-b border-slate-200 mb-4 flex flex-wrap gap-2 md:gap-4">
+                                <button data-tab="6-topics" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Topics</button>
+                                <button data-tab="6-industry" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Industry Flavor</button>
+                                <button data-tab="6-labs" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Labs</button>
+                                <button data-tab="6-ctf" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">CTF Prep</button>
+                                <button data-tab="6-resources" class="tab-btn p-2 md:px-4 md:py-2 text-sm md:text-base font-semibold border-b-2 border-transparent transition-colors">Resources</button>
+                            </div>
+                            <div class="tab-content text-slate-700">
+                                <div id="6-topics">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>CTF formats: Jeopardy-style, Attack-Defense, and King of the Hill.</li>
+                                        <li>Platforms: HackTheBox, TryHackMe, OverTheWire, and CTFtime.</li>
+                                        <li>Teamwork, documentation, and CTF write-up skills.</li>
+                                        <li>Capstone project: Solve a beginner-level CTF challenge set and submit a detailed write-up.</li>
+                                    </ul>
+                                </div>
+                                <div id="6-industry" class="hidden">
+                                     <ul class="list-disc list-inside space-y-2">
+                                        <li>CTF skills in penetration testing and bug bounty programs.</li>
+                                        <li>Importance of documentation in SOC and Red Team roles.</li>
+                                    </ul>
+                                </div>
+                                <div id="6-labs" class="hidden">
+                                     <ul class="list-disc list-inside space-y-2">
+                                        <li>Participate in beginner-friendly CTFs (e.g., TryHackMe weekly challenges).</li>
+                                        <li>Write and present a professional CTF write-up.</li>
+                                    </ul>
+                                </div>
+                                <div id="6-ctf" class="hidden">
+                                     <ul class="list-disc list-inside space-y-2">
+                                        <li>Compete in a mock CTF organized by the club.</li>
+                                        <li>Solve 30–40 beginner challenges across platforms.</li>
+                                    </ul>
+                                </div>
+                                <div id="6-resources" class="hidden">
+                                    <h4 class="font-bold mb-3 text-teal-700">Supplementary Media:</h4>
+                                    <ul class="space-y-3">
+                                        <li><a href="https://www.youtube.com/watch?v=mock_ctf_writeup" target="_blank" class="text-blue-600 hover:text-blue-800 underline flex items-center"><span class="mr-2">▶️</span> YouTube: How to Write a Professional CTF Writeup</a></li>
+                                        <li><a href="https://docs.google.com/document/d/mock_ctf_guide.pdf" target="_blank" class="text-blue-600 hover:text-blue-800 underline flex items-center"><span class="mr-2">📄</span> PDF: Beginner's Guide to CTF Categories and Tools</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <footer class="text-center py-6 bg-slate-100 mt-16">
+        <p class="text-slate-500">Interactive curriculum designed for Cyber Camp 101. Created with Tailwind CSS, Chart.js, and Three.js.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const tabSetup = () => {
+                const allModuleTabs = document.querySelectorAll('.module-tabs');
+                allModuleTabs.forEach(module => {
+                    const tabButtons = module.querySelectorAll('.tab-btn');
+                    const tabContents = module.querySelectorAll('.tab-content > div');
+                    
+                    if (tabButtons.length > 0) {
+                        tabButtons[0].classList.add('active');
+                        tabContents[0].classList.remove('hidden');
+                    }
+
+                    tabButtons.forEach(button => {
+                        button.addEventListener('click', () => {
+                            tabButtons.forEach(btn => btn.classList.remove('active'));
+                            button.classList.add('active');
+
+                            const tabId = button.dataset.tab;
+                            tabContents.forEach(content => {
+                                if (content.id === tabId) {
+                                    content.classList.remove('hidden');
+                                } else {
+                                    content.classList.add('hidden');
+                                }
+                            });
+                        });
+                    });
+                });
+            };
+
+            const chartSetup = () => {
+                const ctx = document.getElementById('commitmentChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Instruction', 'Self-Study (Avg)'],
+                        datasets: [{
+                            label: 'Weekly Hours',
+                            data: [4, 8.5], 
+                            backgroundColor: [
+                                '#0d9488',
+                                '#ccfbf1'
+                            ],
+                            borderColor: [
+                                '#0f766e',
+                                '#5eead4'
+                            ],
+                            borderWidth: 1,
+                            hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#475569',
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed + ' hours';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+            };
+
+            const timelineSetup = () => {
+                const navLinks = document.querySelectorAll('#timeline-nav a');
+                const sections = document.querySelectorAll('.curriculum-module');
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            navLinks.forEach(link => {
+                                link.classList.remove('active');
+                                if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                    link.classList.add('active');
+                                }
+                            });
+                        }
+                    });
+                }, { rootMargin: "-30% 0px -30% 0px" });
+
+                sections.forEach(section => {
+                    observer.observe(section);
+                });
+            };
+
+            const threeJsSetup = () => {
+                const canvas = document.getElementById('threeCanvas');
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+                renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+
+                const geometry = new THREE.IcosahedronGeometry(1.5, 1);
+                const material = new THREE.MeshBasicMaterial({
+                    color: 0x065f46,
+                    wireframe: true,
+                    opacity: 0.8,
+                    transparent: true
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                scene.add(mesh);
+
+                camera.position.z = 4;
+
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    mesh.rotation.x += 0.005;
+                    mesh.rotation.y += 0.007;
+                    renderer.render(scene, camera);
+                };
+
+                const onWindowResize = () => {
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+                };
+
+                window.addEventListener('resize', onWindowResize);
+                onWindowResize();
+                animate();
+            };
+
+            chartSetup();
+            tabSetup();
+            timelineSetup();
+            if (typeof THREE !== 'undefined') {
+                 threeJsSetup();
+            } else {
+                console.log("Three.js not loaded. Skipping 3D animation.");
+            }
+        });
+    </script>
+</body>
+</html>
